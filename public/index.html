@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Invoices with AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="glass-container main-app">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <h1>Invoice AI Merger</h1>
+            </div>
+            <div class="header-actions">
+                <span id="fic-status" class="status-badge disconnected">
+                    <i class="fa-solid fa-cloud-bolt"></i> Non connesso a FIC
+                </span>
+                <a id="btn-login" href="/api/fic/auth" class="btn btn-outline" style="display: none;">Connetti a Fatture in Cloud</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="step-indicator">
+                <div class="step active" id="step-1">1. Carica</div>
+                <div class="step-line"></div>
+                <div class="step" id="step-2">2. Elaborazione AI</div>
+                <div class="step-line"></div>
+                <div class="step" id="step-3">3. Anteprima e Invio</div>
+            </div>
+
+            <section id="upload-section" class="active-section">
+                <div class="drag-drop-zone" id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <h2>Trascina le fatture qui</h2>
+                    <p>Supporta file PDF ed immagini da un singolo fornitore</p>
+                    <input type="file" id="file-input" multiple accept=".pdf,image/*" hidden>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Sfoglia i file</button>
+                </div>
+                
+                <div class="file-list-container" id="file-list-container" style="display: none;">
+                    <h3>File Selezionati:</h3>
+                    <ul id="file-list"></ul>
+                    <button id="btn-merge" class="btn btn-gradient btn-large mt-4">Genera Fattura Unica <i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                </div>
+            </section>
+
+            <section id="loading-section" style="display: none;" class="text-center">
+                <div class="loader">
+                    <div class="spinner"></div>
+                </div>
+                <h2 class="mt-4 pulse-text">L'Intelligenza Artificiale (Gemini) sta leggendo e unendo le fatture...</h2>
+                <p>Questa operazione potrebbe richiedere alcuni secondi.</p>
+            </section>
+
+            <section id="preview-section" style="display: none;">
+                <div class="preview-card">
+                    <div class="invoice-header">
+                        <div>
+                            <h2 id="prev-supplier-name">Nome Fornitore</h2>
+                            <p class="text-muted" id="prev-supplier-vat">P.IVA: -</p>
+                        </div>
+                        <div class="invoice-date">
+                            <i class="fa-regular fa-calendar"></i> <span id="prev-date">YYYY-MM-DD</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container mt-4">
+                        <table class="invoice-table">
+                            <thead>
+                                <tr>
+                                    <th>Rif/Codice</th>
+                                    <th>Descrizione</th>
+                                    <th class="text-right">Quantità</th>
+                                    <th class="text-right">Prezzo Netto</th>
+                                    <th class="text-right">IVA %</th>
+                                    <th class="text-right">Totale Netto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prev-articles">
+                                <!-- Articles will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="invoice-summary mt-4 text-right">
+                        <h3>Totale Documento: <span id="prev-total">€ 0.00</span></h3>
+                    </div>
+
+                    <div class="action-bar mt-4">
+                        <button id="btn-reset" class="btn btn-outline">Ricomincia</button>
+                        <button id="btn-upload-fic" class="btn btn-primary btn-large">Carica su Fatture in Cloud <i class="fa-solid fa-cloud-arrow-up"></i></button>
+                    </div>
+                    <div id="upload-status" class="mt-2 text-center" style="display: none;"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

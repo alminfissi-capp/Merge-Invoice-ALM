@@ -92,6 +92,7 @@ async function createInvoice(accessToken, invoiceData) {
     const payload = {
         data: {
             type: "self_supplier_invoice",
+            language: { code: "it", name: "Italiano" },
             date: invoiceData.date || new Date().toISOString().split('T')[0],
             entity: {
                 id: supplierId,

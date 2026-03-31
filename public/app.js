@@ -99,8 +99,10 @@ function updateFileList() {
         fileListContainer.style.display = 'block';
         selectedFiles.forEach((file, index) => {
             const li = document.createElement('li');
+            const isZip = file.name.toLowerCase().endsWith('.zip');
+            const icon = isZip ? 'fa-regular fa-file-zipper' : 'fa-regular fa-file-pdf';
             li.innerHTML = `
-                <i class="fa-regular fa-file-pdf"></i>
+                <i class="${icon}"></i>
                 <span style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
                 <i class="fa-solid fa-times" style="cursor:pointer; color: var(--danger); margin-left: auto;" onclick="removeFile(${index})"></i>
             `;

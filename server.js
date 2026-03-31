@@ -3,7 +3,9 @@ const multer = require('multer');
 const cookieSession = require('cookie-session');
 const dotenv = require('dotenv');
 const os = require('os');
+const fs = require('fs');
 const path = require('path');
+const AdmZip = require('adm-zip');
 const { getAuthUrl, getToken, createInvoice } = require('./services/fattureincloud');
 const { parseInvoicesAndMerge } = require('./services/openrouter');
 
@@ -47,9 +49,41 @@ app.post('/api/merge-invoices', upload.array('invoices'), async (req, res) => {
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: 'No files uploaded' });
         }
-        
-        console.log(`Received ${req.files.length} files for merging.`);
-        const mergedData = await parseInvoicesAndMerge(req.files);
+
+        // Extract PDFs from ZIP files and collect all files to process
+        const filesToProcess = [];
+        for (const file of req.files) {
+            if (file.originalname.toLowerCase().endsWith('.zip')) {
+                const zip = new AdmZip(file.path);
+                const entries = zip.getEntries();
+                for (const entry of entries) {
+                    if (entry.isDirectory) continue;
+                    const name = entry.entryName.toLowerCase();
+                    if (name.endsWith('.pdf') || name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/)) {
+                        const tmpPath = path.join(os.tmpdir(), `zip_${Date.now()}_${path.basename(entry.entryName)}`);
+                        fs.writeFileSync(tmpPath, entry.getData());
+                        filesToProcess.push({
+                            fieldname: file.fieldname,
+                            originalname: path.basename(entry.entryName),
+                            mimetype: name.endsWith('.pdf') ? 'application/pdf' : `image/${path.extname(name).slice(1)}`,
+                            path: tmpPath,
+                            size: entry.header.size
+                        });
+                    }
+                }
+                // Clean up the original ZIP temp file
+                fs.unlinkSync(file.path);
+            } else {
+                filesToProcess.push(file);
+            }
+        }
+
+        if (filesToProcess.length === 0) {
+            return res.status(400).json({ error: 'Nessun file PDF o immagine trovato (neanche dentro i file ZIP).' });
+        }
+
+        console.log(`Received ${req.files.length} files, processing ${filesToProcess.length} after ZIP extraction.`);
+        const mergedData = await parseInvoicesAndMerge(filesToProcess);
         
         req.session.mergedData = mergedData;
         res.json({ success: true, data: mergedData });

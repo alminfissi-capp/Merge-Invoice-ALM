@@ -99,14 +99,15 @@ async function createInvoice(accessToken, invoiceData) {
                 vat_number: invoiceData.entity?.vat_number || ""
             },
             items_list: invoiceData.articles.map(a => {
-                const descParts = [a.name];
+                const descParts = [];
                 if (a.invoice_number) descParts.push(`Fatt. ${a.invoice_number}`);
                 if (a.invoice_date) descParts.push(`del ${a.invoice_date}`);
                 if (a.currency) descParts.push(`Valuta: ${a.currency}`);
                 return {
                 product_id: null,
                 code: a.code || "",
-                name: descParts.join(' - '),
+                name: a.name,
+                description: descParts.length > 0 ? descParts.join(' - ') : "",
                 net_price: a.net_price,
                 qty: a.qty,
                 vat: {

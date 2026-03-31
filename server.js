@@ -1,7 +1,8 @@
 const express = require('express');
 const multer = require('multer');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const dotenv = require('dotenv');
+const os = require('os');
 const path = require('path');
 const { getAuthUrl, getToken, createInvoice } = require('./services/fattureincloud');
 const { parseInvoicesAndMerge } = require('./services/openrouter');
@@ -9,14 +10,14 @@ const { parseInvoicesAndMerge } = require('./services/openrouter');
 dotenv.config();
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: os.tmpdir() });
 
 app.use(express.static('public'));
 app.use(express.json());
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: true
+app.use(cookieSession({
+    name: 'session',
+    keys: [process.env.SESSION_SECRET || 'secret'],
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 
 app.get('/api/fic/status', (req, res) => {

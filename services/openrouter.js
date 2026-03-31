@@ -34,7 +34,7 @@ Devi estrarre i dati e unirle in un'unica fattura strutturata in formato JSON.
 Regole di Unione:
 1. Trova il "Fornitore" (Nome, P.IVA/Codice Fiscale).
 2. Trova tutti gli articoli/voci presenti (Riferimento/Codice, descrizione, quantità, prezzo netto, aliquota IVA). Fai attenzione a prendere il prezzo netto (non ivato). Estrai l'IVA ESATTAMENTE come scritta sulla fattura (es. 0, 4, 10, 22). Non inventare l'IVA, se è 0 scrivi 0.
-3. Raggruppa le voci identiche (stesso RIFERIMENTO/Codice e stesso prezzo) sommando la quantità. Usa il riferimento nel documento per raggrupparle, e non basarti solo sulla descrizione!
+3. NON raggruppare MAI le righe tra loro, anche se hanno descrizione simile. Ogni riga di ogni fattura deve restare una riga separata con quantità originale, perché ogni riga ha un identificativo/riferimento diverso che è il dato che comanda.
 4. Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
 
 {

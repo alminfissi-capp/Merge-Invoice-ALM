@@ -84,8 +84,7 @@ app.post('/api/merge-invoices', upload.array('invoices'), async (req, res) => {
 
         console.log(`Received ${req.files.length} files, processing ${filesToProcess.length} after ZIP extraction.`);
         const mergedData = await parseInvoicesAndMerge(filesToProcess);
-        
-        req.session.mergedData = mergedData;
+
         res.json({ success: true, data: mergedData });
     } catch (error) {
         console.error("Error merging invoices:", error);
@@ -99,7 +98,7 @@ app.post('/api/upload-fic', async (req, res) => {
             return res.status(401).json({ error: 'Fatture in Cloud non connesso. Esegui il login prima.' });
         }
         
-        const mergedData = req.body.invoiceData || req.session.mergedData;
+        const mergedData = req.body.invoiceData;
         if (!mergedData) {
              return res.status(400).json({ error: 'Nessun dato fattura da caricare.' });
         }

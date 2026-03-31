@@ -143,6 +143,7 @@ btnMerge.addEventListener('click', async () => {
         
         if (result.success) {
             mergedInvoiceData = result.data;
+            localStorage.setItem('mergedInvoiceData', JSON.stringify(mergedInvoiceData));
             renderPreview(mergedInvoiceData);
         } else {
             alert('Errore: ' + (result.error || 'Errore sconosciuto'));
@@ -193,6 +194,7 @@ document.getElementById('btn-reset').addEventListener('click', resetView);
 function resetView() {
     selectedFiles = [];
     mergedInvoiceData = null;
+    localStorage.removeItem('mergedInvoiceData');
     updateFileList();
     
     sectionUpload.style.display = 'block';
@@ -226,6 +228,7 @@ document.getElementById('btn-upload-fic').addEventListener('click', async () => 
         const result = await response.json();
         
         if (result.success) {
+            localStorage.removeItem('mergedInvoiceData');
             statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> Fattura caricata con successo su Fatture in Cloud!';
             statusDiv.className = 'mt-4 text-center';
             statusDiv.style.color = 'var(--success)';
@@ -244,3 +247,15 @@ document.getElementById('btn-upload-fic').addEventListener('click', async () => 
 
 // Init
 checkFICStatus();
+
+// Restore cached preview if available
+const cached = localStorage.getItem('mergedInvoiceData');
+if (cached) {
+    try {
+        mergedInvoiceData = JSON.parse(cached);
+        sectionUpload.style.display = 'none';
+        renderPreview(mergedInvoiceData);
+    } catch(e) {
+        localStorage.removeItem('mergedInvoiceData');
+    }
+}

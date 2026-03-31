@@ -134,6 +134,9 @@ async function createInvoice(accessToken, invoiceData) {
         data: {
             type: "self_supplier_invoice",
             e_invoice: true,
+            ei_data: {
+                payment_method: "MP05"
+            },
             language: { code: "it", name: "Italiano" },
             date: invoiceData.date || new Date().toISOString().split('T')[0],
             entity: {

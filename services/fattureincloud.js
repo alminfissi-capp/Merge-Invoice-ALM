@@ -118,10 +118,22 @@ async function createInvoice(accessToken, invoiceData) {
     const totalVat = Math.round(totalNet * 22) / 100;
     const totalGross = Math.round((totalNet + totalVat) * 100) / 100;
 
+    // Build DatiFattureCollegate from unique invoices
+    const invoiceRefs = [];
+    const seenInvoices = new Set();
+    invoiceData.articles.forEach(a => {
+        if (a.invoice_number && !seenInvoices.has(a.invoice_number)) {
+            seenInvoices.add(a.invoice_number);
+            const ref = { IdDocumento: String(a.invoice_number) };
+            if (a.invoice_date) ref.Data = String(a.invoice_date);
+            invoiceRefs.push(ref);
+        }
+    });
+
     const payload = {
         data: {
             type: "self_supplier_invoice",
-            ei_type: "TD17",
+            e_invoice: true,
             language: { code: "it", name: "Italiano" },
             date: invoiceData.date || new Date().toISOString().split('T')[0],
             entity: {
@@ -129,14 +141,21 @@ async function createInvoice(accessToken, invoiceData) {
                 name: invoiceData.entity?.name || "Fornitore Sconosciuto",
                 vat_number: invoiceData.entity?.vat_number || ""
             },
+            ei_raw: {
+                FatturaElettronicaBody: {
+                    DatiGenerali: {
+                        DatiGeneraliDocumento: {
+                            TipoDocumento: "TD17"
+                        },
+                        ...(invoiceRefs.length > 0 ? { DatiFattureCollegate: invoiceRefs } : {})
+                    }
+                }
+            },
             items_list: invoiceData.articles.map(a => {
                 const descParts = [];
                 if (a.invoice_number) descParts.push(`Fatt. ${a.invoice_number}`);
                 if (a.invoice_date) descParts.push(`del ${a.invoice_date}`);
                 if (a.currency) descParts.push(`Valuta: ${a.currency}`);
-                const eiRaw = {};
-                if (a.invoice_number) eiRaw["2.1.6.2"] = a.invoice_number;
-                if (a.invoice_date) eiRaw["2.1.6.3"] = a.invoice_date;
                 return {
                 product_id: null,
                 code: a.code || "",
@@ -147,8 +166,7 @@ async function createInvoice(accessToken, invoiceData) {
                 vat: {
                     id: vatMap[22] !== undefined ? vatMap[22] : 0,
                     value: 22
-                },
-                ei_raw: Object.keys(eiRaw).length > 0 ? eiRaw : undefined
+                }
                 };
             }),
             payments_list: [{

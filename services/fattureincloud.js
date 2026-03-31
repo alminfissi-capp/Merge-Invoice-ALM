@@ -47,7 +47,6 @@ async function createInvoice(accessToken, invoiceData) {
             if (suppRes.data.data && suppRes.data.data.length > 0) {
                 supplierId = suppRes.data.data[0].id;
             } else {
-                 // Create supplier if not found
                  const createSuppResponse = await axios.post(`https://api-v2.fattureincloud.it/c/${companyId}/entities/suppliers`, {
                      data: {
                          name: invoiceData.entity.name || "Fornitore Sconosciuto",
@@ -61,6 +60,36 @@ async function createInvoice(accessToken, invoiceData) {
             }
         } catch (e) {
              console.error("Supplier check/create error:", e.response?.data || e.message);
+        }
+    }
+
+    // 2b. Discover or create as client (issued_documents requires a client entity)
+    let clientId = null;
+    if (invoiceData.entity && invoiceData.entity.vat_number) {
+        try {
+            const clientRes = await axios.get(`https://api-v2.fattureincloud.it/c/${companyId}/entities/clients`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                params: {
+                    fieldset: 'detailed',
+                    q: `vat_number = '${invoiceData.entity.vat_number}'`
+                }
+            });
+            if (clientRes.data.data && clientRes.data.data.length > 0) {
+                clientId = clientRes.data.data[0].id;
+            } else {
+                const createClientResponse = await axios.post(`https://api-v2.fattureincloud.it/c/${companyId}/entities/clients`, {
+                    data: {
+                        name: invoiceData.entity.name || "Fornitore Sconosciuto",
+                        vat_number: invoiceData.entity.vat_number,
+                        country: "Italia"
+                    }
+                }, {
+                    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+                });
+                clientId = createClientResponse.data.data.id;
+            }
+        } catch (e) {
+            console.error("Client check/create error:", e.response?.data || e.message);
         }
     }
 
@@ -95,7 +124,7 @@ async function createInvoice(accessToken, invoiceData) {
             language: { code: "it", name: "Italiano" },
             date: invoiceData.date || new Date().toISOString().split('T')[0],
             entity: {
-                id: supplierId,
+                id: clientId,
                 name: invoiceData.entity?.name || "Fornitore Sconosciuto",
                 vat_number: invoiceData.entity?.vat_number || ""
             },
@@ -104,6 +133,9 @@ async function createInvoice(accessToken, invoiceData) {
                 if (a.invoice_number) descParts.push(`Fatt. ${a.invoice_number}`);
                 if (a.invoice_date) descParts.push(`del ${a.invoice_date}`);
                 if (a.currency) descParts.push(`Valuta: ${a.currency}`);
+                const eiRaw = {};
+                if (a.invoice_number) eiRaw["2.1.6.2"] = a.invoice_number;
+                if (a.invoice_date) eiRaw["2.1.6.3"] = a.invoice_date;
                 return {
                 product_id: null,
                 code: a.code || "",
@@ -114,7 +146,8 @@ async function createInvoice(accessToken, invoiceData) {
                 vat: {
                     id: vatMap[22] !== undefined ? vatMap[22] : 0,
                     value: 22
-                }
+                },
+                ei_raw: Object.keys(eiRaw).length > 0 ? eiRaw : undefined
                 };
             }),
             payments_list: [{

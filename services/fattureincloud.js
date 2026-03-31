@@ -81,20 +81,13 @@ async function createInvoice(accessToken, invoiceData) {
     // Default fallback 22% is id 0
     vatMap[22] = vatMap[22] !== undefined ? vatMap[22] : 0;
 
-    const vatGroups = {};
+    let totalNet = 0;
     invoiceData.articles.forEach(a => {
-        const vatRate = a.vat?.value ?? 22;
-        if (!vatGroups[vatRate]) vatGroups[vatRate] = 0;
-        vatGroups[vatRate] += (a.qty * a.net_price);
+        totalNet += (a.qty * a.net_price);
     });
-
-    let totalGross = 0;
-    for (const rate in vatGroups) {
-        const net = Math.round(vatGroups[rate] * 100) / 100; // Total net for this VAT rate
-        const vat = Math.round(net * rate) / 100;            // Tax for this VAT rate
-        totalGross += (net + vat);
-    }
-    totalGross = Math.round(totalGross * 100) / 100;
+    totalNet = Math.round(totalNet * 100) / 100;
+    const totalVat = Math.round(totalNet * 22) / 100;
+    const totalGross = Math.round((totalNet + totalVat) * 100) / 100;
 
     const payload = {
         data: {
@@ -105,17 +98,23 @@ async function createInvoice(accessToken, invoiceData) {
                 name: invoiceData.entity?.name || "Fornitore Sconosciuto",
                 vat_number: invoiceData.entity?.vat_number || ""
             },
-            items_list: invoiceData.articles.map(a => ({
+            items_list: invoiceData.articles.map(a => {
+                const descParts = [a.name];
+                if (a.invoice_number) descParts.push(`Fatt. ${a.invoice_number}`);
+                if (a.invoice_date) descParts.push(`del ${a.invoice_date}`);
+                if (a.currency) descParts.push(`Valuta: ${a.currency}`);
+                return {
                 product_id: null,
                 code: a.code || "",
-                name: a.name,
+                name: descParts.join(' - '),
                 net_price: a.net_price,
                 qty: a.qty,
                 vat: {
-                    id: vatMap[a.vat?.value ?? 0] !== undefined ? vatMap[a.vat?.value ?? 0] : (a.vat?.value === 22 ? 0 : null),
-                    value: a.vat?.value ?? 0
+                    id: vatMap[22] !== undefined ? vatMap[22] : 0,
+                    value: 22
                 }
-            })),
+                };
+            }),
             payments_list: [{
                 amount: totalGross,
                 due_date: invoiceData.date || new Date().toISOString().split('T')[0],

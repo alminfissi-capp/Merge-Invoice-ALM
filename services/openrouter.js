@@ -33,9 +33,11 @@ Devi estrarre i dati e unirle in un'unica fattura strutturata in formato JSON.
 
 Regole di Unione:
 1. Trova il "Fornitore" (Nome, P.IVA/Codice Fiscale).
-2. Trova tutti gli articoli/voci presenti (Riferimento/Codice, descrizione, quantità, prezzo netto, aliquota IVA). Fai attenzione a prendere il prezzo netto (non ivato). Estrai l'IVA ESATTAMENTE come scritta sulla fattura (es. 0, 4, 10, 22). Non inventare l'IVA, se è 0 scrivi 0.
-3. NON raggruppare MAI le righe tra loro, anche se hanno descrizione simile. Ogni riga di ogni fattura deve restare una riga separata con quantità originale, perché ogni riga ha un identificativo/riferimento diverso che è il dato che comanda.
-4. Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
+2. Per OGNI fattura, estrai: Numero Fattura, Data di Emissione e Valuta.
+3. Trova tutti gli articoli/voci presenti (Riferimento/Codice, descrizione, quantità, prezzo netto, aliquota IVA). Fai attenzione a prendere il prezzo netto (non ivato). Estrai l'IVA ESATTAMENTE come scritta sulla fattura (es. 0, 4, 10, 22). Non inventare l'IVA, se è 0 scrivi 0.
+4. NON raggruppare MAI le righe tra loro, anche se hanno descrizione simile. Ogni riga di ogni fattura deve restare una riga separata con quantità originale, perché ogni riga ha un identificativo/riferimento diverso che è il dato che comanda.
+5. Per ogni articolo, aggiungi i campi "invoice_number", "invoice_date" e "currency" presi dalla fattura di appartenenza.
+6. Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
 
 {
   "entity": {
@@ -51,7 +53,10 @@ Regole di Unione:
       "net_price": 10.50,
       "vat": {
         "value": 0
-      }
+      },
+      "invoice_number": "FT-2024/001",
+      "invoice_date": "2024-01-15",
+      "currency": "EUR"
     }
   ],
   "notes": "Fatture unite automaticamente con le fatture originali."

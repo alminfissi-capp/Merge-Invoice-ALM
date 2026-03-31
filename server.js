@@ -36,8 +36,9 @@ app.get('/api/fic/callback', async (req, res) => {
         req.session.fic_token = token;
         res.redirect('/?connected=true');
     } catch (err) {
-        console.error("Error exchanging token:", err.message);
-        res.status(500).send("Authentication failed: " + err.message);
+        const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+        console.error("Error exchanging token:", detail);
+        res.status(500).send("Authentication failed: " + detail);
     }
 });
 

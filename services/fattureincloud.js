@@ -154,24 +154,17 @@ async function createInvoice(accessToken, invoiceData) {
                     }
                 }
             },
-            items_list: invoiceData.articles.map(a => {
-                const descParts = [];
-                if (a.invoice_number) descParts.push(`Fatt. ${a.invoice_number}`);
-                if (a.invoice_date) descParts.push(`del ${a.invoice_date}`);
-                if (a.currency) descParts.push(`Valuta: ${a.currency}`);
-                return {
+            items_list: invoiceData.articles.map(a => ({
                 product_id: null,
                 code: a.code || "",
                 name: a.name,
-                description: descParts.length > 0 ? descParts.join(' - ') : "",
                 net_price: a.net_price,
                 qty: a.qty,
                 vat: {
                     id: vatMap[22] !== undefined ? vatMap[22] : 0,
                     value: 22
                 }
-                };
-            }),
+            })),
             payments_list: [{
                 amount: totalGross,
                 due_date: invoiceData.date || new Date().toISOString().split('T')[0],

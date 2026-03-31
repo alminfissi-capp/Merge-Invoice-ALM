@@ -121,6 +121,7 @@ async function createInvoice(accessToken, invoiceData) {
     const payload = {
         data: {
             type: "self_supplier_invoice",
+            ei_type: "TD17",
             language: { code: "it", name: "Italiano" },
             date: invoiceData.date || new Date().toISOString().split('T')[0],
             entity: {
